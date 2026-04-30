@@ -22,20 +22,34 @@ export function MusicPlayer({ volume }: MusicPlayerProps) {
     const audio = audioRef.current;
     if (!audio || autoPlayAttemptedRef.current) return;
 
-    autoPlayAttemptedRef.current = true;
-    audio.muted = false;
+    const tryAutoPlay = () => {
+      if (autoPlayAttemptedRef.current) return;
+      autoPlayAttemptedRef.current = true;
+      audio.muted = false;
 
-    void audio.play().then(
-      () => setIsPlaying(true),
-      () => {
-        // Browser autoplay policy fallback: start muted if needed.
-        audio.muted = true;
-        void audio.play().then(
-          () => setIsPlaying(true),
-          () => setIsPlaying(false),
-        );
-      },
-    );
+      void audio.play().then(
+        () => setIsPlaying(true),
+        () => {
+          // Browser autoplay policy fallback: start muted if needed.
+          audio.muted = true;
+          void audio.play().then(
+            () => setIsPlaying(true),
+            () => setIsPlaying(false),
+          );
+        },
+      );
+    };
+
+    audio.preload = "auto";
+    audio.load();
+    tryAutoPlay();
+
+    const handleCanPlay = () => tryAutoPlay();
+    audio.addEventListener("canplay", handleCanPlay);
+
+    return () => {
+      audio.removeEventListener("canplay", handleCanPlay);
+    };
   }, []);
 
   useEffect(() => {
@@ -99,6 +113,8 @@ export function MusicPlayer({ volume }: MusicPlayerProps) {
       <audio
         ref={audioRef}
         src={profileConfig.track.src}
+        preload="auto"
+        playsInline
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => setIsPlaying(false)}
