@@ -203,17 +203,30 @@ export const ProfileCard = forwardRef<ProfileCardHandle, ProfileCardProps>(funct
           </AnimatePresence>
         </Card>
 
-        <Card className="mt-3 w-full overflow-hidden rounded-2xl border-white/10 bg-white/4 p-1 shadow-[0_10px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-          <div className="relative aspect-[16/7] w-full overflow-hidden rounded-xl">
-            <Image
-              src={profileConfig.gifCardUrl}
-              alt="GIF de destaque"
-              fill
-              unoptimized
-              className="object-cover"
-            />
-          </div>
-        </Card>
+        <AnimatePresence initial={false}>
+          {activeTab === "links" && (
+            <motion.div
+              key="highlight-gif"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="mt-3 w-full"
+            >
+              <Card className="w-full overflow-hidden rounded-2xl border-white/10 bg-white/4 p-1 shadow-[0_10px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+                <div className="relative aspect-[16/7] w-full overflow-hidden rounded-xl">
+                  <Image
+                    src={profileConfig.gifCardUrl}
+                    alt="GIF de destaque"
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="mt-2 w-full">
           <MusicPlayer ref={musicPlayerRef} volume={volume} />
