@@ -1,6 +1,7 @@
 import { profileConfig } from "@/lib/profile-config";
 
-export const revalidate = 1800;
+export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type YouTubeVideo = {
   title: string;
@@ -43,7 +44,7 @@ type YouTubePlaylistResponse = {
 type ThumbnailMap = Record<string, { url?: string }>;
 
 const cacheHeaders = {
-  "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=86400",
+  "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
 };
 
 function selectThumbnail(thumbnails?: ThumbnailMap) {
@@ -83,10 +84,61 @@ async function fetchJson<T>(url: URL) {
   return (await response.json()) as T;
 }
 
-async function fetchLatestWithDataApi(apiKey: string) {
+function normalizeYouTubeHandle(value: string) {
+  const trimmed = value.trim();
+  const handle = trimmed
+    .replace(/^https?:\/\/(?:www\.)?youtube\.com\//, "")
+    .replace(/^@?/, "@")
+    .split(/[/?#]/)[0];
+
+  return handle.startsWith("@") ? handle : `@${handle}`;
+}
+
+function isYouTubeChannelId(value: string) {
+  return /^UC[\w-]{20,}$/.test(value.trim());
+}
+
+async function resolveChannelIdFromHandle(handle: string) {
+  const channelUrl = new URL(`https://www.youtube.com/${normalizeYouTubeHandle(handle)}`);
+  const response = await fetch(channelUrl, { next: { revalidate } });
+
+  if (!response.ok) {
+    throw new Error(`Página do canal respondeu ${response.status}`);
+  }
+
+  const html = await response.text();
+  const channelId =
+    html.match(/"channelId":"(UC[\w-]+)"/)?.[1] ??
+    html.match(/<meta itemprop="channelId" content="(UC[\w-]+)">/)?.[1] ??
+    html.match(/\/feeds\/videos\.xml\?channel_id=(UC[\w-]+)/)?.[1];
+
+  if (!channelId) {
+    throw new Error("ID do canal não encontrado pelo handle");
+  }
+
+  return channelId;
+}
+
+async function resolveChannelId(channelIdOrHandle: string) {
+  const value = channelIdOrHandle.trim();
+
+  if (!value) return "";
+  if (isYouTubeChannelId(value)) return value;
+
+  return resolveChannelIdFromHandle(value);
+}
+
+async function fetchLatestWithDataApi(apiKey: string, channelIdOrHandle?: string) {
   const channelUrl = new URL("https://www.googleapis.com/youtube/v3/channels");
   channelUrl.searchParams.set("part", "snippet,contentDetails");
-  channelUrl.searchParams.set("forHandle", profileConfig.youtube.handle);
+  const channelLookup = channelIdOrHandle?.trim() || profileConfig.youtube.handle;
+
+  if (isYouTubeChannelId(channelLookup)) {
+    channelUrl.searchParams.set("id", channelLookup);
+  } else {
+    channelUrl.searchParams.set("forHandle", normalizeYouTubeHandle(channelLookup));
+  }
+
   channelUrl.searchParams.set("key", apiKey);
   channelUrl.searchParams.set(
     "fields",
@@ -128,7 +180,8 @@ async function fetchLatestWithDataApi(apiKey: string) {
   } satisfies YouTubeVideo;
 }
 
-async function fetchLatestWithRss(channelId: string) {
+async function fetchLatestWithRss(channelIdOrHandle: string) {
+  const channelId = await resolveChannelId(channelIdOrHandle);
   const feedUrl = new URL("https://www.youtube.com/feeds/videos.xml");
   feedUrl.searchParams.set("channel_id", channelId);
 
@@ -170,9 +223,11 @@ export async function GET() {
 
   try {
     const video = apiKey
-      ? await fetchLatestWithDataApi(apiKey)
+      ? await fetchLatestWithDataApi(apiKey, channelId || profileConfig.youtube.handle)
       : channelId
         ? await fetchLatestWithRss(channelId)
+        : profileConfig.youtube.handle
+          ? await fetchLatestWithRss(profileConfig.youtube.handle)
         : null;
 
     if (!video) {
