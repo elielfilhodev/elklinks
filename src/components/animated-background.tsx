@@ -25,21 +25,21 @@ function seeded(min: number, max: number, seed: number) {
   return min + fraction * (max - min);
 }
 
-const stars: Star[] = Array.from({ length: 42 }, (_, index) => ({
+const stars: Star[] = Array.from({ length: 64 }, (_, index) => ({
   left: `${seeded(0, 100, index + 1).toFixed(2)}%`,
   top: `${seeded(0, 100, index + 17).toFixed(2)}%`,
-  size: seeded(1, 3, index + 31),
-  duration: seeded(2, 5, index + 47),
-  delay: seeded(0, 2, index + 63),
+  size: seeded(1.4, 3.4, index + 31),
+  duration: seeded(2.4, 5.8, index + 47),
+  delay: seeded(0, 3, index + 63),
 }));
 
-const snowflakes: Snowflake[] = Array.from({ length: 34 }, (_, index) => ({
+const snowflakes: Snowflake[] = Array.from({ length: 46 }, (_, index) => ({
   left: `${seeded(2, 98, index + 101).toFixed(2)}%`,
-  size: seeded(1.5, 4.5, index + 137),
-  duration: seeded(7, 15, index + 173),
-  delay: seeded(0, 10, index + 211),
-  drift: seeded(-26, 26, index + 257),
-  opacity: seeded(0.35, 0.85, index + 293),
+  size: seeded(2.2, 5.8, index + 137),
+  duration: seeded(8, 17, index + 173),
+  delay: seeded(0, 11, index + 211),
+  drift: seeded(-34, 34, index + 257),
+  opacity: seeded(0.38, 0.88, index + 293),
 }));
 
 export function AnimatedBackground() {
@@ -48,19 +48,19 @@ export function AnimatedBackground() {
       {snowflakes.map((flake, index) => (
         <motion.span
           key={`snow-${index}`}
-          className="absolute rounded-full bg-white"
+          className="absolute rounded-full bg-white/90 shadow-[0_0_8px_rgba(255,255,255,0.35)]"
           style={{
             left: flake.left,
-            top: "-6%",
+            top: "-8%",
             width: flake.size,
             height: flake.size,
             opacity: flake.opacity,
-            filter: "blur(0.2px)",
+            filter: "blur(0.25px)",
           }}
           animate={{
-            y: ["0vh", "112vh"],
-            x: [0, flake.drift, 0],
-            opacity: [0, flake.opacity, flake.opacity, 0],
+            y: ["0vh", "116vh"],
+            x: [0, flake.drift * 0.45, flake.drift, flake.drift * 0.2],
+            opacity: [0, flake.opacity, flake.opacity * 0.85, 0],
           }}
           transition={{
             duration: flake.duration,
@@ -73,15 +73,15 @@ export function AnimatedBackground() {
 
       {stars.map((star, index) => (
         <motion.span
-          key={index}
-          className="absolute rounded-full bg-white/70"
+          key={`star-${index}`}
+          className="absolute rounded-full bg-white/80 shadow-[0_0_10px_rgba(255,255,255,0.45)]"
           style={{
             left: star.left,
             top: star.top,
             width: star.size,
             height: star.size,
           }}
-          animate={{ opacity: [0.25, 0.9, 0.25], scale: [1, 1.3, 1] }}
+          animate={{ opacity: [0.18, 0.95, 0.32, 0.8, 0.18], scale: [1, 1.35, 1, 1.18, 1] }}
           transition={{
             duration: star.duration,
             repeat: Number.POSITIVE_INFINITY,
