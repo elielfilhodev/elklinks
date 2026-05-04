@@ -28,6 +28,11 @@ export const profileConfig = {
   verified: true,
   avatarUrl: "/icon.png",
   gifCardUrl: "/black-clover-yami.gif",
+  youtube: {
+    handle: "@elkfps",
+    channelUrl: "https://www.youtube.com/@elkfps",
+    channelId: "",
+  },
   track: {
     title: "ESCAPE",
     artist: "AENEAS & JESTIC",
@@ -36,7 +41,7 @@ export const profileConfig = {
 } as const;
 
 export const socialLinks: SocialLink[] = [
-  { label: "YouTube", href: "https://www.youtube.com/@elielfilhodev", icon: FaYoutube },
+  { label: "YouTube", href: profileConfig.youtube.channelUrl, icon: FaYoutube },
   { label: "Instagram", href: "https://www.instagram.com/elielfilho.dev/", icon: FaInstagram },
   { label: "TikTok", href: "https://www.tiktok.com/@flaemys", icon: FaTiktok },
   { label: "Email", href: "mailto:elielgalaxy8@gmail.com", icon: Mail as IconType },

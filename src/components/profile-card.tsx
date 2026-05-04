@@ -11,11 +11,24 @@ import {
   type SocialLink,
 } from "@/lib/profile-config";
 import { AnimatePresence, motion } from "framer-motion";
-import { MapPin } from "lucide-react";
+import { ExternalLink, Loader2, MapPin, PlayCircle } from "lucide-react";
 import Image from "next/image";
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-type ProfileTab = "links" | "setup";
+type ProfileTab = "links" | "setup" | "youtube";
+
+type LatestYouTubeVideo = {
+  title: string;
+  url: string;
+  thumbnailUrl: string;
+  publishedAt: string;
+  channelTitle: string;
+};
+
+type YouTubeState =
+  | { status: "idle" | "loading" }
+  | { status: "success"; video: LatestYouTubeVideo }
+  | { status: "error"; message: string };
 
 function SocialButton({ item }: { item: SocialLink }) {
   const Icon = item.icon;
@@ -82,6 +95,83 @@ function SetupSpecItem({ item }: { item: SetupSpec }) {
   );
 }
 
+function formatPublishedAt(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+function YouTubeLatestCard({ state }: { state: YouTubeState }) {
+  if (state.status === "loading" || state.status === "idle") {
+    return (
+      <div className="flex min-h-32 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-xs text-zinc-400">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Buscando último vídeo...
+      </div>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-left">
+        <p className="text-xs font-semibold text-white">Último vídeo indisponível</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-zinc-400">{state.message}</p>
+        <a
+          href={profileConfig.youtube.channelUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-zinc-200 hover:text-white"
+        >
+          Abrir canal
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      </div>
+    );
+  }
+
+  if (state.status !== "success") return null;
+
+  const { video } = state;
+  const publishedAt = formatPublishedAt(video.publishedAt);
+
+  return (
+    <motion.a
+      href={video.url}
+      target="_blank"
+      rel="noreferrer"
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      className="group block overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] text-left transition-colors hover:border-white/25"
+    >
+      <div
+        className="relative aspect-video bg-cover bg-center"
+        style={{ backgroundImage: `url(${video.thumbnailUrl})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <PlayCircle className="h-10 w-10 text-white/90 drop-shadow-[0_0_16px_rgba(255,255,255,0.35)] transition-transform duration-300 group-hover:scale-110" />
+        </div>
+      </div>
+      <div className="p-3">
+        <p className="line-clamp-2 text-xs font-semibold leading-snug text-white">
+          {video.title}
+        </p>
+        <p className="mt-1 text-[10px] text-zinc-500">
+          {video.channelTitle}
+          {publishedAt ? ` • ${publishedAt}` : ""}
+        </p>
+      </div>
+    </motion.a>
+  );
+}
+
 type ProfileCardProps = {
   volume: number;
 };
@@ -96,6 +186,15 @@ export const ProfileCard = forwardRef<ProfileCardHandle, ProfileCardProps>(funct
 ) {
   const musicPlayerRef = useRef<MusicPlayerHandle>(null);
   const [activeTab, setActiveTab] = useState<ProfileTab>("links");
+  const [youtubeState, setYoutubeState] = useState<YouTubeState>({ status: "idle" });
+
+  const handleTabChange = (tab: ProfileTab) => {
+    setActiveTab(tab);
+
+    if (tab === "youtube" && youtubeState.status === "idle") {
+      setYoutubeState({ status: "loading" });
+    }
+  };
 
   useImperativeHandle(
     ref,
@@ -104,6 +203,35 @@ export const ProfileCard = forwardRef<ProfileCardHandle, ProfileCardProps>(funct
     }),
     [],
   );
+
+  useEffect(() => {
+    if (activeTab !== "youtube" || youtubeState.status !== "loading") return;
+
+    const controller = new AbortController();
+
+    fetch("/api/youtube/latest", { signal: controller.signal })
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          video?: LatestYouTubeVideo;
+          error?: string;
+        };
+
+        if (!response.ok || !data.video) {
+          throw new Error(data.error ?? "Não foi possível carregar o último vídeo");
+        }
+
+        setYoutubeState({ status: "success", video: data.video });
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        setYoutubeState({
+          status: "error",
+          message: error instanceof Error ? error.message : "Falha ao carregar o YouTube",
+        });
+      });
+
+    return () => controller.abort();
+  }, [activeTab, youtubeState.status]);
 
   return (
     <motion.div
@@ -166,16 +294,19 @@ export const ProfileCard = forwardRef<ProfileCardHandle, ProfileCardProps>(funct
 
         <Card className="mt-3 w-full rounded-2xl border-white/10 bg-white/4 p-2.5 shadow-[0_10px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
           <div className="mb-2 flex rounded-2xl border border-white/10 bg-black/35 p-1">
-            <TabButton active={activeTab === "links"} onClick={() => setActiveTab("links")}>
+            <TabButton active={activeTab === "links"} onClick={() => handleTabChange("links")}>
               Links
             </TabButton>
-            <TabButton active={activeTab === "setup"} onClick={() => setActiveTab("setup")}>
+            <TabButton active={activeTab === "setup"} onClick={() => handleTabChange("setup")}>
               Setup Spec
+            </TabButton>
+            <TabButton active={activeTab === "youtube"} onClick={() => handleTabChange("youtube")}>
+              YouTube
             </TabButton>
           </div>
 
           <AnimatePresence mode="wait" initial={false}>
-            {activeTab === "links" ? (
+            {activeTab === "links" && (
               <motion.div
                 key="links"
                 initial={{ opacity: 0, y: 6 }}
@@ -188,7 +319,9 @@ export const ProfileCard = forwardRef<ProfileCardHandle, ProfileCardProps>(funct
                   <SocialButton key={item.label} item={item} />
                 ))}
               </motion.div>
-            ) : (
+            )}
+
+            {activeTab === "setup" && (
               <motion.div
                 key="setup"
                 initial={{ opacity: 0, y: 6 }}
@@ -200,6 +333,18 @@ export const ProfileCard = forwardRef<ProfileCardHandle, ProfileCardProps>(funct
                 {setupSpecs.map((item) => (
                   <SetupSpecItem key={item.label} item={item} />
                 ))}
+              </motion.div>
+            )}
+
+            {activeTab === "youtube" && (
+              <motion.div
+                key="youtube"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                <YouTubeLatestCard state={youtubeState} />
               </motion.div>
             )}
           </AnimatePresence>
