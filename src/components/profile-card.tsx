@@ -122,8 +122,10 @@ export const ProfileCard = forwardRef<ProfileCardHandle, ProfileCardProps>(funct
           </Avatar>
         </motion.div>
 
-        <div className="mt-2 flex items-center gap-1.5">
-          <h1 className="text-lg font-semibold tracking-tight text-white">{profileConfig.name}</h1>
+        <div className="mt-2 flex items-center gap-1.5 rounded-2xl border border-white/15 bg-white/[0.07] px-3 py-1.5 shadow-[0_0_28px_rgba(255,255,255,0.16)] backdrop-blur-md">
+          <h1 className="bg-gradient-to-r from-white via-zinc-200 to-white bg-clip-text text-lg font-semibold tracking-tight text-transparent drop-shadow-[0_0_12px_rgba(255,255,255,0.45)]">
+            {profileConfig.name}
+          </h1>
           {profileConfig.verified && (
             <Image
               src="/marca-de-verificacao.png"
