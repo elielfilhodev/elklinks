@@ -25,18 +25,18 @@ function seeded(min: number, max: number, seed: number) {
   return min + fraction * (max - min);
 }
 
-const stars: Star[] = Array.from({ length: 64 }, (_, index) => ({
+const stars: Star[] = Array.from({ length: 128 }, (_, index) => ({
   left: `${seeded(0, 100, index + 1).toFixed(2)}%`,
   top: `${seeded(0, 100, index + 17).toFixed(2)}%`,
-  size: seeded(1.4, 3.4, index + 31),
+  size: seeded(1.8, 4.4, index + 31),
   duration: seeded(2.4, 5.8, index + 47),
   delay: seeded(0, 3, index + 63),
 }));
 
-const snowflakes: Snowflake[] = Array.from({ length: 46 }, (_, index) => ({
+const snowflakes: Snowflake[] = Array.from({ length: 128 }, (_, index) => ({
   left: `${seeded(2, 98, index + 101).toFixed(2)}%`,
   size: seeded(2.2, 5.8, index + 137),
-  duration: seeded(8, 17, index + 173),
+  duration: seeded(8, 20, index + 195),
   delay: seeded(0, 11, index + 211),
   drift: seeded(-34, 34, index + 257),
   opacity: seeded(0.38, 0.88, index + 293),
