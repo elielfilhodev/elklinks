@@ -137,7 +137,7 @@ export const ProfileCard = forwardRef<ProfileCardHandle, ProfileCardProps>(funct
 
         <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-zinc-300">
           <MapPin className="h-3 w-3" />
-          Sao Paulo
+          São Paulo
         </p>
 
         <Card className="mt-3 w-full rounded-2xl border-white/10 bg-white/4 p-3 shadow-[0_10px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">

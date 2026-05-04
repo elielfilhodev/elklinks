@@ -26,7 +26,7 @@ export const profileConfig = {
   bio: "Less talk, more skills",
   location: "Sao Paulo, BR",
   verified: true,
-  avatarUrl: "/levi.jpg",
+  avatarUrl: "/icon.png",
   gifCardUrl: "/R.gif",
   track: {
     title: "ESCAPE",
