@@ -7,12 +7,18 @@ import {
   FaTwitch,
   FaYoutube,
 } from "react-icons/fa";
-import { Mail } from "lucide-react";
+import { Gamepad2, Keyboard, Laptop, Mail, Monitor, Mouse, type LucideIcon } from "lucide-react";
 
 export type SocialLink = {
   label: string;
   href: string;
   icon: IconType;
+};
+
+export type SetupSpec = {
+  label: string;
+  value: string;
+  icon: LucideIcon;
 };
 
 export const profileConfig = {
@@ -37,4 +43,13 @@ export const socialLinks: SocialLink[] = [
   { label: "Twitch", href: "https://www.twitch.tv/hxssonyy", icon: FaTwitch },
   { label: "Steam", href: "https://steamcommunity.com/profiles/76561199440450048", icon: FaSteam },
   { label: "Discord", href: "https://discord.gg/tQ2yGk7R5", icon: FaDiscord },
+];
+
+export const setupSpecs: SetupSpec[] = [
+  { label: "Console", value: "PlayStation 5", icon: Gamepad2 },
+  { label: "Controle", value: "PS5 Padrão", icon: Gamepad2 },
+  { label: "Monitor", value: "Monitor Gamer Acer Nitro 144Hz IPS", icon: Monitor },
+  { label: "Teclado", value: "Redragon Fizz Switch Brown", icon: Keyboard },
+  { label: "Mouse", value: "Mouse gamer ergonômico sem fio", icon: Mouse },
+  { label: "Notebook", value: "i3 10100H, 8GB RAM", icon: Laptop },
 ];

@@ -3,10 +3,19 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { MusicPlayer } from "@/components/music-player";
-import { profileConfig, socialLinks, type SocialLink } from "@/lib/profile-config";
-import { motion } from "framer-motion";
+import {
+  profileConfig,
+  setupSpecs,
+  socialLinks,
+  type SetupSpec,
+  type SocialLink,
+} from "@/lib/profile-config";
+import { AnimatePresence, motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+
+type ProfileTab = "links" | "setup";
 
 function SocialButton({ item }: { item: SocialLink }) {
   const Icon = item.icon;
@@ -26,11 +35,60 @@ function SocialButton({ item }: { item: SocialLink }) {
   );
 }
 
+function TabButton({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative flex-1 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+        active ? "text-black" : "text-zinc-300 hover:text-white"
+      }`}
+    >
+      {active && (
+        <motion.span
+          layoutId="profile-active-tab"
+          className="absolute inset-0 rounded-xl bg-white"
+          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+        />
+      )}
+      <span className="relative z-10">{children}</span>
+    </button>
+  );
+}
+
+function SetupSpecItem({ item }: { item: SetupSpec }) {
+  const Icon = item.icon;
+
+  return (
+    <div className="flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-2.5 text-left">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+          {item.label}
+        </p>
+        <p className="mt-0.5 text-xs leading-snug text-zinc-100">{item.value}</p>
+      </div>
+    </div>
+  );
+}
+
 type ProfileCardProps = {
   volume: number;
 };
 
 export function ProfileCard({ volume }: ProfileCardProps) {
+  const [activeTab, setActiveTab] = useState<ProfileTab>("links");
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -81,11 +139,46 @@ export function ProfileCard({ volume }: ProfileCardProps) {
           </div>
         </Card>
 
-        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-          {socialLinks.map((item) => (
-            <SocialButton key={item.label} item={item} />
-          ))}
-        </div>
+        <Card className="mt-3 w-full rounded-2xl border-white/10 bg-white/4 p-2.5 shadow-[0_10px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+          <div className="mb-2 flex rounded-2xl border border-white/10 bg-black/35 p-1">
+            <TabButton active={activeTab === "links"} onClick={() => setActiveTab("links")}>
+              Links
+            </TabButton>
+            <TabButton active={activeTab === "setup"} onClick={() => setActiveTab("setup")}>
+              Setup Spec
+            </TabButton>
+          </div>
+
+          <AnimatePresence mode="wait" initial={false}>
+            {activeTab === "links" ? (
+              <motion.div
+                key="links"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="flex flex-wrap justify-center gap-1.5 py-1"
+              >
+                {socialLinks.map((item) => (
+                  <SocialButton key={item.label} item={item} />
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="setup"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="grid gap-2"
+              >
+                {setupSpecs.map((item) => (
+                  <SetupSpecItem key={item.label} item={item} />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Card>
 
         <Card className="mt-3 w-full overflow-hidden rounded-2xl border-white/10 bg-white/4 p-1 shadow-[0_10px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
           <div className="relative aspect-[16/7] w-full overflow-hidden rounded-xl">
