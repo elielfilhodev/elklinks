@@ -4,19 +4,41 @@ import { Button } from "@/components/ui/button";
 import { profileConfig } from "@/lib/profile-config";
 import { motion } from "framer-motion";
 import { Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 
 type MusicPlayerProps = {
   volume: number;
 };
 
-export function MusicPlayer({ volume }: MusicPlayerProps) {
+export type MusicPlayerHandle = {
+  play: () => void;
+};
+
+export const MusicPlayer = forwardRef<MusicPlayerHandle, MusicPlayerProps>(function MusicPlayer(
+  { volume },
+  ref,
+) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const autoPlayAttemptedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+
+  const playAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = volume;
+    audio.muted = volume <= 0;
+
+    void audio.play().then(
+      () => setIsPlaying(true),
+      () => setIsPlaying(false),
+    );
+  }, [volume]);
+
+  useImperativeHandle(ref, () => ({ play: playAudio }), [playAudio]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -56,10 +78,13 @@ export function MusicPlayer({ volume }: MusicPlayerProps) {
     const audio = audioRef.current;
     if (!audio) return;
     audio.volume = volume;
-    if (audio.muted && volume > 0) {
+    if (audio.muted && volume > 0 && isPlaying) {
       audio.muted = false;
+      void audio.play().catch(() => {
+        audio.muted = true;
+      });
     }
-  }, [volume]);
+  }, [isPlaying, volume]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -177,4 +202,4 @@ export function MusicPlayer({ volume }: MusicPlayerProps) {
       </div>
     </div>
   );
-}
+});

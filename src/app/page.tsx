@@ -1,45 +1,55 @@
 "use client";
 
 import { AnimatedBackground } from "@/components/animated-background";
-import { ProfileCard } from "@/components/profile-card";
+import { ProfileCard, type ProfileCardHandle } from "@/components/profile-card";
 import { ScreenVolumeControl } from "@/components/screen-volume-control";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function Home() {
+  const profileCardRef = useRef<ProfileCardHandle>(null);
   const [hasEntered, setHasEntered] = useState(false);
   const [volume, setVolume] = useState(0.7);
+
+  const handleEnter = () => {
+    profileCardRef.current?.playMusic();
+    setHasEntered(true);
+  };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-4 py-8 sm:px-6">
       <AnimatedBackground />
+      <motion.div
+        initial={false}
+        animate={
+          hasEntered
+            ? { opacity: 1, scale: 1, filter: "blur(0px)" }
+            : { opacity: 0, scale: 0.98, filter: "blur(10px)" }
+        }
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        className={`relative z-10 flex w-full justify-center ${
+          hasEntered ? "pointer-events-auto" : "pointer-events-none"
+        }`}
+        aria-hidden={!hasEntered}
+      >
+        <ScreenVolumeControl volume={volume} onChange={setVolume} />
+        <main className="flex w-full justify-center">
+          <ProfileCard ref={profileCardRef} volume={volume} />
+        </main>
+      </motion.div>
       <AnimatePresence mode="wait">
-        {hasEntered ? (
-          <motion.div
-            key="profile"
-            initial={{ opacity: 0, scale: 0.98, filter: "blur(10px)" }}
-            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, scale: 0.98, filter: "blur(10px)" }}
-            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 flex w-full justify-center"
-          >
-            <ScreenVolumeControl volume={volume} onChange={setVolume} />
-            <main className="flex w-full justify-center">
-              <ProfileCard volume={volume} />
-            </main>
-          </motion.div>
-        ) : (
+        {!hasEntered && (
           <motion.main
             key="enter"
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.98, filter: "blur(8px)" }}
             transition={{ duration: 0.42, ease: "easeOut" }}
-            className="relative z-10 flex w-full max-w-sm flex-col items-center text-center"
+            className="absolute inset-0 z-20 flex items-center justify-center px-4 text-center"
           >
             <motion.button
               type="button"
-              onClick={() => setHasEntered(true)}
+              onClick={handleEnter}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               className="group rounded-3xl border border-white/15 bg-white/8 px-8 py-6 shadow-[0_20px_70px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-colors hover:border-white/35 hover:bg-white/12"

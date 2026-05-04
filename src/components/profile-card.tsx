@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { MusicPlayer } from "@/components/music-player";
+import { MusicPlayer, type MusicPlayerHandle } from "@/components/music-player";
 import {
   profileConfig,
   setupSpecs,
@@ -13,7 +13,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 
 type ProfileTab = "links" | "setup";
 
@@ -86,8 +86,24 @@ type ProfileCardProps = {
   volume: number;
 };
 
-export function ProfileCard({ volume }: ProfileCardProps) {
+export type ProfileCardHandle = {
+  playMusic: () => void;
+};
+
+export const ProfileCard = forwardRef<ProfileCardHandle, ProfileCardProps>(function ProfileCard(
+  { volume },
+  ref,
+) {
+  const musicPlayerRef = useRef<MusicPlayerHandle>(null);
   const [activeTab, setActiveTab] = useState<ProfileTab>("links");
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      playMusic: () => musicPlayerRef.current?.play(),
+    }),
+    [],
+  );
 
   return (
     <motion.div
@@ -193,9 +209,9 @@ export function ProfileCard({ volume }: ProfileCardProps) {
         </Card>
 
         <div className="mt-2 w-full">
-          <MusicPlayer volume={volume} />
+          <MusicPlayer ref={musicPlayerRef} volume={volume} />
         </div>
       </div>
     </motion.div>
   );
-}
+});
