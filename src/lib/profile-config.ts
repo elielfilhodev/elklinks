@@ -27,7 +27,7 @@ export const profileConfig = {
   location: "Sao Paulo, BR",
   verified: true,
   avatarUrl: "/icon.png",
-  gifCardUrl: "/R.gif",
+  gifCardUrl: "/black-clover-yami.gif",
   track: {
     title: "ESCAPE",
     artist: "AENEAS & JESTIC",
