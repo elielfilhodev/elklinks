@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 type Star = {
   left: string;
@@ -45,6 +46,18 @@ const snowflakes: Snowflake[] = Array.from({ length: 24 }, (_, index) => ({
 export function AnimatedBackground() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <Image
+        src="/background.gif"
+        alt=""
+        fill
+        priority
+        unoptimized
+        aria-hidden="true"
+        className="object-cover opacity-[0.18] saturate-125"
+      />
+      <div className="absolute inset-0 bg-black/55" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.55)_78%)]" />
+
       {snowflakes.map((flake, index) => (
         <motion.span
           key={`snow-${index}`}

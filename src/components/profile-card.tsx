@@ -40,10 +40,10 @@ function SocialButton({ item }: { item: SocialLink }) {
       rel="noreferrer"
       whileHover={{ y: -3, scale: 1.04 }}
       whileTap={{ scale: 0.97 }}
-      className="group flex h-8 w-8 items-center justify-center rounded-md border border-white/15 bg-white text-black transition-colors hover:border-white hover:bg-zinc-100"
+      className="group flex h-9 w-9 items-center justify-center rounded-full text-white/90 transition-[color,filter] duration-300 [filter:drop-shadow(0_0_8px_rgba(255,255,255,0.75))_drop-shadow(0_0_18px_rgba(255,255,255,0.38))] hover:text-white hover:[filter:drop-shadow(0_0_12px_rgba(255,255,255,0.98))_drop-shadow(0_0_30px_rgba(255,255,255,0.55))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70"
       aria-label={item.label}
     >
-      <Icon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+      <Icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
     </motion.a>
   );
 }

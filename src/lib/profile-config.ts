@@ -26,7 +26,7 @@ export const profileConfig = {
   bio: "Less talk, more skills",
   location: "Sao Paulo, BR",
   verified: true,
-  avatarUrl: "/icon.png",
+  avatarUrl: "/chihiro.jpg",
   gifCardUrl: "/black-clover-yami.gif",
   youtube: {
     handle: "@elkfps",
