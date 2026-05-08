@@ -43,6 +43,8 @@ type YouTubePlaylistResponse = {
 
 type ThumbnailMap = Record<string, { url?: string }>;
 
+const publicThumbnailQualities = ["maxresdefault", "sddefault", "hqdefault"] as const;
+
 const cacheHeaders = {
   "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
 };
@@ -57,6 +59,39 @@ function selectThumbnail(thumbnails?: ThumbnailMap) {
     thumbnails.default?.url ??
     ""
   );
+}
+
+function getPublicThumbnailUrl(videoId: string, quality: (typeof publicThumbnailQualities)[number]) {
+  return `https://i.ytimg.com/vi/${videoId}/${quality}.jpg`;
+}
+
+async function selectPublicThumbnail(videoId: string) {
+  for (const quality of publicThumbnailQualities) {
+    const thumbnailUrl = getPublicThumbnailUrl(videoId, quality);
+
+    try {
+      const response = await fetch(thumbnailUrl, {
+        method: "HEAD",
+        next: { revalidate },
+      });
+
+      if (response.ok) return thumbnailUrl;
+    } catch {
+      return getPublicThumbnailUrl(videoId, "hqdefault");
+    }
+  }
+
+  return getPublicThumbnailUrl(videoId, "hqdefault");
+}
+
+async function selectBestThumbnail(videoId: string, thumbnails?: ThumbnailMap) {
+  const apiThumbnail = selectThumbnail(thumbnails);
+
+  if (apiThumbnail.includes("/maxresdefault.") || apiThumbnail.includes("/sddefault.")) {
+    return apiThumbnail;
+  }
+
+  return selectPublicThumbnail(videoId);
 }
 
 function readXmlTag(xml: string, tag: string) {
@@ -174,7 +209,7 @@ async function fetchLatestWithDataApi(apiKey: string, channelIdOrHandle?: string
   return {
     title: item.snippet.title ?? "Último vídeo",
     url: `https://www.youtube.com/watch?v=${videoId}`,
-    thumbnailUrl: selectThumbnail(item.snippet.thumbnails) || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    thumbnailUrl: await selectBestThumbnail(videoId, item.snippet.thumbnails),
     publishedAt: item.snippet.publishedAt ?? "",
     channelTitle: item.snippet.videoOwnerChannelTitle ?? channel?.snippet?.title ?? "YouTube",
   } satisfies YouTubeVideo;
@@ -211,7 +246,7 @@ async function fetchLatestWithRss(channelIdOrHandle: string) {
   return {
     title: title || "Último vídeo",
     url: link,
-    thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    thumbnailUrl: await selectPublicThumbnail(videoId),
     publishedAt,
     channelTitle: channelTitle || "YouTube",
   } satisfies YouTubeVideo;
